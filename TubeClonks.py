@@ -1,5 +1,9 @@
 from pytube import YouTube
 from pytube import Playlist
+import tkinter as tk
+from tkinter import messagebox
+from tkinter import filedialog
+from tkinter import ttk
 
 class ArchivoAudio:
     def __init__(self, url, directorio_almacen):
@@ -84,52 +88,76 @@ class ListaReproduccion:
             archivo = ArchivoVideo(url_video, self.directorio_almacen, self.calidad_video)
             archivo.descargar()
         
+
+class DescargadorApp:
+    def __init__(self, master):
+        self.master = master
+        master.title("Descargador de YouTube")
+
+        self.label = tk.Label(master, text="Bienvenido al Descargador de YouTube")
+        self.label.pack()
+
+        self.url_label = tk.Label(master, text="URL:")
+        self.url_label.pack()
+
+        self.url_entry = tk.Entry(master)
+        self.url_entry.pack()
+
+        #self.directorio_label = tk.Label(master, text="Directorio:")
+        #self.directorio_label.pack()
+
+        #self.directorio_entry = tk.Entry(master)
+        #self.directorio_entry.pack()
         
+        self.opcion_formato_label = tk.Label(master, text='Elegi el formato')
+        self.opcion_formato_label.pack()
+
+        self.opciones_formato = ["Audio/mp3", "Video/mp4"]
+        self.lista_opcion_formato = ttk.Combobox(root, values=self.opciones_formato)
+        self.lista_opcion_formato.pack()
+
+        self.lista_opcion_formato.bind("<<ComboboxSelected>>",self.seleccionar_opcion_formato)
+
         
-if __name__ == '__main__':
+        self.calidad_video_label = tk.Label(master, text="Calidad de Video:")
+        #self.calidad_video_label.pack()
+        
+        self.opciones_calidad_video = ['360p', '720p']
+        self.lista_opcion_calidad_video = ttk.Combobox(root, values=self.opciones_calidad_video)
+
+        self.descargar_button = tk.Button(master, text="Descargar", command=self.descargar)
+        self.descargar_button.pack(side='bottom')
+
+    def seleccionar_opcion_formato(self, event):
+        opcion_seleccionada = self.lista_opcion_formato.get()
+        if opcion_seleccionada == 'Audio/mp3':
+            self.calidad_video_label.pack_forget()
+            self.lista_opcion_calidad_video.pack_forget()
+        elif opcion_seleccionada == 'Video/mp4':
+            self.calidad_video_label.pack()
+            self.lista_opcion_calidad_video.pack()
     
-    while True:
-        print('--------------------------------------------')
-        print('''▄▄▄█████▓ █    ██  ▄▄▄▄   ▓█████     ▄████▄   ██░ ██  ▄▄▄       ██▀███    ▄████ ▓█████     ██▒   █▓      ██▓ ██▓
-▓  ██▒ ▓▒ ██  ▓██▒▓█████▄ ▓█   ▀    ▒██▀ ▀█  ▓██░ ██▒▒████▄    ▓██ ▒ ██▒ ██▒ ▀█▒▓█   ▀    ▓██░   █▒     ▓██▒▓██▒
-▒ ▓██░ ▒░▓██  ▒██░▒██▒ ▄██▒███      ▒▓█    ▄ ▒██▀▀██░▒██  ▀█▄  ▓██ ░▄█ ▒▒██░▄▄▄░▒███       ▓██  █▒░     ▒██▒▒██▒
-░ ▓██▓ ░ ▓▓█  ░██░▒██░█▀  ▒▓█  ▄    ▒▓▓▄ ▄██▒░▓█ ░██ ░██▄▄▄▄██ ▒██▀▀█▄  ░▓█  ██▓▒▓█  ▄      ▒██ █░░     ░██░░██░
-  ▒██▒ ░ ▒▒█████▓ ░▓█  ▀█▓░▒████▒   ▒ ▓███▀ ░░▓█▒░██▓ ▓█   ▓██▒░██▓ ▒██▒░▒▓███▀▒░▒████▒      ▒▀█░   ██▓ ░██░░██░
-  ▒ ░░   ░▒▓▒ ▒ ▒ ░▒▓███▀▒░░ ▒░ ░   ░ ░▒ ▒  ░ ▒ ░░▒░▒ ▒▒   ▓▒█░░ ▒▓ ░▒▓░ ░▒   ▒ ░░ ▒░ ░      ░ ▐░   ▒▓▒ ░▓  ░▓  
-    ░    ░░▒░ ░ ░ ▒░▒   ░  ░ ░  ░     ░  ▒    ▒ ░▒░ ░  ▒   ▒▒ ░  ░▒ ░ ▒░  ░   ░  ░ ░  ░      ░ ░░   ░▒   ▒ ░ ▒ ░
-  ░       ░░░ ░ ░  ░    ░    ░      ░         ░  ░░ ░  ░   ▒     ░░   ░ ░ ░   ░    ░           ░░   ░    ▒ ░ ▒ ░
-            ░      ░         ░  ░   ░ ░       ░  ░  ░      ░  ░   ░           ░    ░  ░         ░    ░   ░  ''')
-        print('--------------------------------------------')
-        print('-by Eze32q')
-        
-        print('''Elegi el formato que quieras
-                0-Salir
-                1-Audio
-                2-Video''')
-        entrada_opcion = int(input('$--> '))
-        if entrada_opcion == 1:
-            url = input('Pega la url:')
-            directorio_almacen = input('Pega el directorio usando el formato: C:\\carpeta\\carpeta-plonks: ')
+    def descargar(self):
+        url = self.url_entry.get()
+        directorio = filedialog.askdirectory()
+    
+        if self.lista_opcion_formato.get() == 'Audio/mp3':
             if 'playlist' in url:
-                puntero_playlist = ListaReproduccion(url, directorio_almacen, None)
+                puntero_playlist = ListaReproduccion(url, directorio, None)
                 puntero_playlist.descargar_audio()
-            else:
-                puntero_audio = ArchivoAudio(url, directorio_almacen)
-                puntero_audio.descargar()
-        elif entrada_opcion == 2:
-            url = input('Pega la url:')
-            directorio_almacen = input('Pega el directorio usando el formato C:\\carpeta\\carpeta-plonks:')
-            print('Escribi la calidad de video fighter.')
-            calidad_video = input('360p | 720p  (pone el p al final del numero): ')
+            else:    
+                audio = ArchivoAudio(url, directorio)
+                audio.descargar()
+        elif self.lista_opcion_formato.get() == 'Video/mp4':
+            calidad_video = self.lista_opcion_calidad_video.get()
             if 'playlist' in url:
-                puntero_playlist = ListaReproduccion(url, directorio_almacen, calidad_video)
+                puntero_playlist = ListaReproduccion(url, directorio, calidad_video)
                 puntero_playlist.descargar_video()
             else:
-                puntero_video = ArchivoVideo(url, directorio_almacen, calidad_video)
-                puntero_video.descargar()
-        elif entrada_opcion == 0:
-            break
-                
-    
-    '''musica = ListaReproduccion('https://www.youtube.com/playlist?list=PL4Fe1aP1msIAz-PsGgm998lfkMKwaoIWZ','C:\\Users\\ezece\\Desktop\\Carpeta codigos\\10-Python\\POO\\pytube\\musica_prueba','1080p')
-    musica.descargar_video()'''
+                video = ArchivoVideo(url, directorio, calidad_video)
+                video.descargar() 
+            
+if __name__ == '__main__':
+    root = tk.Tk()
+    app = DescargadorApp(root)
+    root.mainloop()
