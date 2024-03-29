@@ -20,7 +20,7 @@ class ArchivoAudio:
             titulo = titulo.replace('|', ' ').replace('(', ' ').replace(')', ' ').replace('[', ' ').replace(']', ' ').replace('/', ' ').replace('\\', ' ')
         return titulo
     
-    def descargar(self):
+    def descargar(self, widget, master):
         audio = self.puntero_stream.streams.filter(only_audio=True).order_by('abr').asc().first()
         # esto era para filtrar los archivos de audio por mp3 y wav pero la mayoria de archivos estan en audio/webm
         audio_mp3 = self.puntero_stream.streams.filter(only_audio=True, file_extension='mp3').order_by('abr').asc().first()
@@ -35,9 +35,12 @@ class ArchivoAudio:
 
         try:
             audio.download(self.directorio_almacen, f'{titulo_audio}.mp3')
-            print(f"Se descargo {titulo_audio} en: {self.directorio_almacen}")
+            widget.pack_forget()
+            widget.config(text=f"Se descargo {titulo_audio} en: {self.directorio_almacen}")
+            widget.pack()
         except Exception as e:
-            print(f"Error al descargar {self.puntero_stream.title}: {str(e)}")
+            label_error = tk.Label(master, text=f"Error al descargar {self.puntero_stream.title}: {str(e)}")
+            label_error.pack()
 
         
 class ArchivoVideo(ArchivoAudio):
@@ -45,7 +48,7 @@ class ArchivoVideo(ArchivoAudio):
         super().__init__(url, directorio_almacen)
         self.calidad_video = calidad_video
 
-    def descargar(self):
+    def descargar(self, widget, master):
         '''streams = self.puntero_url.streams
 
         # Mostrar información de cada stream
@@ -62,15 +65,18 @@ class ArchivoVideo(ArchivoAudio):
         try:
             video_titulo = self.purificar_nombre(video.title)
         except AttributeError:
-            print(f'No se encontro la resolucion {self.calidad_video} en las descargas de {self.puntero_stream.title}, intente con otra.')
+            label_error = tk.Label(master, text=f'No se encontro la resolucion {self.calidad_video} en las descargas de {self.puntero_stream.title}, intente con otra.')
+            label_error.pack()
             return AttributeError
         try:
             video.download(self.directorio_almacen, f'{video_titulo}.mp4')
-            print(f"Se descargo {video_titulo} en: {self.directorio_almacen}")
+            widget.pack_forget()
+            widget.config(text=f"Se descargo {video_titulo} en: {self.directorio_almacen}")
+            widget.pack()
         except Exception as e:
-            print(f"Error al descargar {self.puntero_stream.title}: {str(e)}")
-            return Exception
-        
+            label_error = tk.Label(master, text=f"Error al descargar {self.puntero_stream.title}: {str(e)}")
+            label_error.pack()
+            return Exception        
 
 class ListaReproduccion:
     def __init__(self, url, directorio_almacen, calidad_video):
@@ -94,13 +100,13 @@ class DescargadorApp:
         self.master = master
         master.title("Descargador de YouTube")
 
-        self.label = tk.Label(master, text="Bienvenido al Descargador de YouTube")
+        self.label = tk.Label(self.master, text="Bienvenido al Descargador de YouTube")
         self.label.pack()
 
-        self.url_label = tk.Label(master, text="URL:")
+        self.url_label = tk.Label(self.master, text="URL:")
         self.url_label.pack()
 
-        self.url_entry = tk.Entry(master)
+        self.url_entry = tk.Entry(self.master)
         self.url_entry.pack()
 
         #self.directorio_label = tk.Label(master, text="Directorio:")
@@ -109,23 +115,27 @@ class DescargadorApp:
         #self.directorio_entry = tk.Entry(master)
         #self.directorio_entry.pack()
         
-        self.opcion_formato_label = tk.Label(master, text='Elegi el formato')
+        self.opcion_formato_label = tk.Label(self.master, text='Elegi el formato')
         self.opcion_formato_label.pack()
 
         self.opciones_formato = ["Audio/mp3", "Video/mp4"]
-        self.lista_opcion_formato = ttk.Combobox(root, values=self.opciones_formato)
+        self.lista_opcion_formato = ttk.Combobox(self.master, values=self.opciones_formato)
         self.lista_opcion_formato.pack()
 
         self.lista_opcion_formato.bind("<<ComboboxSelected>>",self.seleccionar_opcion_formato)
 
         
-        self.calidad_video_label = tk.Label(master, text="Calidad de Video:")
+        self.calidad_video_label = tk.Label(self.master, text="Calidad de Video:")
         #self.calidad_video_label.pack()
         
         self.opciones_calidad_video = ['360p', '720p']
         self.lista_opcion_calidad_video = ttk.Combobox(root, values=self.opciones_calidad_video)
-
-        self.descargar_button = tk.Button(master, text="Descargar", command=self.descargar)
+        
+        self.notificacion_descarga_completada = tk.Label(self.master)
+        
+        
+        
+        self.descargar_button = tk.Button(self.master, text="Descargar", command=self.descargar)
         self.descargar_button.pack(side='bottom')
 
     def seleccionar_opcion_formato(self, event):
@@ -147,7 +157,7 @@ class DescargadorApp:
                 puntero_playlist.descargar_audio()
             else:    
                 audio = ArchivoAudio(url, directorio)
-                audio.descargar()
+                audio.descargar(self.notificacion_descarga_completada,self.master)
         elif self.lista_opcion_formato.get() == 'Video/mp4':
             calidad_video = self.lista_opcion_calidad_video.get()
             if 'playlist' in url:
@@ -155,7 +165,7 @@ class DescargadorApp:
                 puntero_playlist.descargar_video()
             else:
                 video = ArchivoVideo(url, directorio, calidad_video)
-                video.descargar() 
+                video.descargar(self.notificacion_descarga_completada, self.master) 
             
 if __name__ == '__main__':
     root = tk.Tk()
